@@ -3,3 +3,12 @@ dist
 node_modules
 lib
 test.ts
+
+# CLI session artifacts
+.playwright-cli/
+
+# npm lock (project uses yarn)
+package-lock.json
+
+# Personal test scripts
+check_commands.js
