@@ -252,3 +252,6 @@ between the mouse and the object.
 - Linux: `DEBUG="ghost-cursor:*"`
 - Windows CMD: `set DEBUG=ghost-cursor:*`
 - Windows PowerShell: `$env:DEBUG = "ghost-cursor:*"`
+
+## 📄 Documentation
+プロジェクトの詳細な仕様やタスク管理については [docs/README.md](./docs/README.md) を参照してください。

@@ -6,11 +6,11 @@
   "main": "lib/spoof.js",
   "types": "lib/spoof.d.ts",
   "scripts": {
-    "prepare": "yarn build",
+    "prepare": "npm run build",
     "build": "tsc -p tsconfig.build.json",
     "debug": "ts-node src/__debug__/browser-debug.ts",
-    "lint": "yarn ts-standard --fix",
-    "test": "playwright test"
+    "lint": "npx ts-standard --fix",
+    "test": "npx playwright test"
   },
   "keywords": [
     "bezier-curve",
