@@ -51,9 +51,9 @@ async function humanMove(page, targetX, targetY, opts) {
   const minDelay = opts.minDelay || 8;
   const maxDelay = opts.maxDelay || 22;
 
-  // Get current mouse position from page (use stored position, fall back to random)
-  const startX = opts.startX !== undefined ? opts.startX : (window.__lastMouseX ?? Math.random() * 800 + 100);
-  const startY = opts.startY !== undefined ? opts.startY : (window.__lastMouseY ?? Math.random() * 400 + 100);
+  // Get current mouse position from page (approximate start)
+  const startX = opts.startX !== undefined ? opts.startX : Math.random() * 800 + 100;
+  const startY = opts.startY !== undefined ? opts.startY : Math.random() * 400 + 100;
 
   // Generate two cubic bezier control points with human-like jitter
   const distX = targetX - startX;
@@ -91,7 +91,7 @@ async function humanMove(page, targetX, targetY, opts) {
   await page.mouse.move(targetX, targetY);
 }
 
-async function humanClick(page, element) {
+async function humanClick(page, element, opts) {
   const box = await element.boundingBox();
   if (!box) {
     await element.click();
@@ -101,7 +101,7 @@ async function humanClick(page, element) {
   const targetX = box.x + box.width  * (0.3 + Math.random() * 0.4);
   const targetY = box.y + box.height * (0.3 + Math.random() * 0.4);
 
-  await humanMove(page, targetX, targetY);
+  await humanMove(page, targetX, targetY, opts);
 
   // Brief hover pause before click (human micro-delay)
   await page.waitForTimeout(50 + Math.floor(Math.random() * 100));
@@ -110,12 +110,12 @@ async function humanClick(page, element) {
   await page.mouse.up();
 }
 
-async function humanHover(page, element) {
+async function humanHover(page, element, opts) {
   const box = await element.boundingBox();
   if (!box) return;
   const targetX = box.x + box.width  * (0.3 + Math.random() * 0.4);
   const targetY = box.y + box.height * (0.3 + Math.random() * 0.4);
-  await humanMove(page, targetX, targetY);
+  await humanMove(page, targetX, targetY, opts);
 }
 `;
 
@@ -154,6 +154,12 @@ async function main() {
     const injectCode = `async (page) => {
       ${HUMAN_MOUSE_CODE}
 
+      // Read current cursor position from page (stored by mouse helper)
+      const startPos = await page.evaluate(() => ({
+        startX: window.__lastMouseX,
+        startY: window.__lastMouseY
+      }));
+
       const locatorExpr = ${JSON.stringify(resolvedLocator)};
       let elem;
       if (locatorExpr.startsWith('getBy') || locatorExpr.startsWith('locator(')) {
@@ -164,7 +170,7 @@ async function main() {
       }
 
       if (!elem) throw new Error('Element not found: ' + locatorExpr);
-      await ${actionFn}(page, elem);
+      await ${actionFn}(page, elem, startPos);
     }`;
 
     const status = runCode(injectCode);
@@ -191,6 +197,12 @@ async function main() {
     const injectCode = `async (page) => {
       ${HUMAN_MOUSE_CODE}
 
+      // Read current cursor position from page (stored by mouse helper)
+      const startPos = await page.evaluate(() => ({
+        startX: window.__lastMouseX,
+        startY: window.__lastMouseY
+      }));
+
       const locatorExpr = ${JSON.stringify(resolvedLocator)};
       const textVal = ${JSON.stringify(text)};
       const doSubmit = ${isSubmit};
@@ -207,7 +219,7 @@ async function main() {
       if (!elem) throw new Error('Element not found: ' + locatorExpr);
 
       // Move to element with human-like curve, then click to focus
-      await humanClick(page, elem);
+      await humanClick(page, elem, startPos);
       await page.waitForTimeout(80 + Math.floor(Math.random() * 80));
 
       // Type character by character with human-like delays
